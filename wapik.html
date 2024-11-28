@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Piket dan Jumlah Anggota</title>
+    <style>
+        /* Gaya tetap sama seperti sebelumnya */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #eceff1;
+            color: #2c3e50;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            transition: transform 0.3s ease;
+        }
+        .container:hover {
+            transform: scale(1.02);
+        }
+        h1, h2 {
+            text-align: center;
+            color: #1abc9c;
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 15px;
+            margin-top: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+            font-size: 1em;
+            resize: none;
+        }
+        textarea:focus {
+            box-shadow: 0 0 10px rgba(26, 188, 156, 0.5);
+            border-color: #1abc9c;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #1abc9c;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #16a085;
+            box-shadow: 0 4px 10px rgba(26, 188, 156, 0.2);
+        }
+        #result, #schedule {
+            margin-top: 20px;
+        }
+        .schedule-day {
+            margin-bottom: 20px;
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .schedule-day h3 {
+            color: #1abc9c;
+        }
+        .schedule-group p {
+            margin: 5px 0;
+            color: #2c3e50;
+        }
+        #buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        #buttons-container input {
+            padding: 10px;
+            font-size: 1em;
+            border: 1px solid #bdc3c7;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Piket</h1>
+        <form id="inputForm">
+            <h2>Masukkan Nama Anggota PPTS</h2>
+            <label for="students">Nama anggota PPTS (pisahkan dengan koma):</label>
+            <textarea id="students" placeholder="Saka, Tubagus, Faris, Wilbert"></textarea>
+            <button type="submit">Hitung Jumlah & Hasilkan Jadwal</button>
+        </form>
+        <p id="result"></p>
+        <div id="schedule"></div>
+
+        <div id="buttons-container">
+            <button id="sendToWhatsAppButton" style="display:none;">Kirim Hasil ke Bot</button>
+            <input type="text" id="customPhoneNumber" placeholder="(contoh: 628123456789)" style="display:none;">
+            <button id="sendToCustomWhatsAppButton" style="display:none;">Kirim ke No WhatsApp Tujuan</button>
+            <button id="resetButton" style="display:none;">Reset</button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('inputForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const input = document.getElementById('students').value;
+            const students = input.split(',').map(name => name.trim()).filter(name => name !== '');
+
+            if (students.length < 10) {
+                alert('Silakan masukkan minimal 10 nama.');
+                return;
+            }
+
+            document.getElementById('result').textContent = `Jumlah seluruh anggota: ${students.length}`;
+
+            const shuffledStudents = shuffleArray(students);
+            const schedule = generateSchedule(shuffledStudents);
+            displaySchedule(schedule);
+
+            document.getElementById('sendToWhatsAppButton').style.display = 'block';
+            document.getElementById('customPhoneNumber').style.display = 'block';
+            document.getElementById('sendToCustomWhatsAppButton').style.display = 'block';
+            document.getElementById('resetButton').style.display = 'block';
+        });
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateSchedule(students) {
+            const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat'];
+            const schedule = {};
+
+            days.forEach(day => {
+                schedule[day] = {
+                    frontGate: students.splice(0, 5),
+                    backGate: students.splice(0, 5)
+                };
+            });
+
+            return schedule;
+        }
+
+        function displaySchedule(schedule) {
+            const scheduleContainer = document.getElementById('schedule');
+            scheduleContainer.innerHTML = '';
+
+            for (const day in schedule) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'schedule-day';
+
+                const dayTitle = document.createElement('h3');
+                dayTitle.textContent = day;
+                dayDiv.appendChild(dayTitle);
+
+                const frontGateDiv = document.createElement('div');
+                frontGateDiv.className = 'schedule-group';
+                frontGateDiv.innerHTML = '<strong>Gerbang Depan:</strong>';
+                schedule[day].frontGate.forEach(student => {
+                    const p = document.createElement('p');
+                    p.textContent = student;
+                    frontGateDiv.appendChild(p);
+                });
+                dayDiv.appendChild(frontGateDiv);
+
+                const backGateDiv = document.createElement('div');
+                backGateDiv.className = 'schedule-group';
+                backGateDiv.innerHTML = '<strong>Gerbang Belakang:</strong>';
+                schedule[day].backGate.forEach(student => {
+                    const p = document.createElement('p');
+                    p.textContent = student;
+                    backGateDiv.appendChild(p);
+                });
+                dayDiv.appendChild(backGateDiv);
+
+                scheduleContainer.appendChild(dayDiv);
+            }
+        }
+
+        document.getElementById('sendToWhatsAppButton').addEventListener('click', function() {
+            sendToWhatsApp("6282298955589");
+        });
+
+        document.getElementById('sendToCustomWhatsAppButton').addEventListener('click', function() {
+            const customNumber = document.getElementById('customPhoneNumber').value.trim();
+            if (customNumber) {
+                sendToWhatsApp(customNumber);
+            } else {
+                alert('Masukkan nomor WhatsApp yang valid.');
+            }
+        });
+
+        function sendToWhatsApp(phoneNumber) {
+            const result = document.getElementById('result').textContent;
+            const schedule = formatScheduleForCopy(document.getElementById('schedule'));
+
+            // Menambahkan watermark yang tidak dapat dihapus oleh pengguna
+            const watermark = "\n\nMade by Saka"; 
+            const fullContent = `${result}\n\n${schedule}${watermark}`;
+            
+            const message = encodeURIComponent(fullContent);
+            const fullLink = `https://wa.me/${phoneNumber}?text=${message}`;
+            window.open(fullLink, '_blank');
+        }
+
+        function formatScheduleForCopy(scheduleContainer) {
+            let text = '';
+            const days = scheduleContainer.querySelectorAll('.schedule-day');
+            days.forEach(day => {
+                const title = day.querySelector('h3').textContent;
+                text += `${title}\n`;
+
+                const groups = day.querySelectorAll('.schedule-group');
+                groups.forEach(group => {
+                    const header = group.querySelector('strong').textContent;
+                    text += `${header}\n`;
+                    group.querySelectorAll('p').forEach(p => {
+                        text += `- ${p.textContent}\n`;
+                    });
+                });
+
+                text += '\n';
+            });
+
+            return text.trim();
+        }
+
+        document.getElementById('resetButton').addEventListener('click', function() {
+            document.getElementById('inputForm').reset();
+            document.getElementById('result').textContent = '';
+            document.getElementById('schedule').innerHTML = '';
+            document.getElementById('sendToWhatsAppButton').style.display = 'none';
+            document.getElementById('customPhoneNumber').style.display = 'none';
+            document.getElementById('sendToCustomWhatsAppButton').style.display = 'none';
+            document.getElementById('resetButton').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
